@@ -1,0 +1,59 @@
+export PARTITIONS="vtbd0 GPT { auto freebsd-ufs / }"
+export DISTRIBUTIONS="kernel.txz base.txz containerservices.txz"
+export HOSTNAME=freebsd
+export BSDINSTALL_DISTSITE="https://download.freebsd.org/releases/amd64/13.2-RELEASE"
+export INTERFACES=vtnet0
+
+export nonInteractive="YES"
+
+# Acquire an address using DHCP.
+dhclient $INTERFACES
+
+#!/bin/sh
+
+export LC_ALL=C
+
+sysrc ifconfig_DEFAULT=DHCP
+sysrc sshd_enable=YES
+sysrc sshkeys_enable=YES
+sysrc growfs_enable=YES
+
+# No. Sendmail.
+for smcfg in enable submit_enable outbound_enable msp_queue_enable; do
+	sysrc sendmail_${smcfg}="NO"
+done
+
+pkg install -y \
+	sudo \
+	rsync
+
+# Add freebsd user if it doesn't exist
+if ! getent passwd freebsd; then
+cat > users.txt <<EOF
+freebsd::::::FreeBSD User::/bin/sh:
+EOF
+
+adduser -f users.txt
+chpass -p '!LOCKED!' freebsd
+fi
+
+# Grant sudo privileges to freebsd user
+cat > /usr/local/etc/sudoers.d/freebsd <<EOF
+freebsd ALL=(ALL) NOPASSWD: ALL
+EOF
+chmod 440 /usr/local/etc/sudoers.d/freebsd
+
+# Use only the serial console and disable any boot delay
+cat >> /boot/loader.conf <<EOF
+autoboot_delay="0"
+console="comconsole"
+comconsole_speed="115200"
+EOF
+
+# Disable virtual console gettys
+sed -i '' '/^ttyv[0-9]/ s/^/#/' /etc/ttys
+
+rm -rf /usr/freebsd-dist
+
+touch /firstboot
+poweroff

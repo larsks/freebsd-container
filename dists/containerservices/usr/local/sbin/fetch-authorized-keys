@@ -1,0 +1,39 @@
+#!/bin/sh
+
+sshkeys_user=freebsd
+sshkeys_interval=5
+sshkeys_hostaddr="$(netstat -4rn | awk '/default/ {print $2}'):8080"
+
+. /etc/rc.subr
+
+load_rc_config sshkeys
+
+if [ -z "$sshkeys_group" ]; then
+	sshkeys_group=$sshkeys_user
+fi
+
+if [ -z "$sshkeys_homedir" ]; then
+	sshkeys_homedir="$(getent passwd $sshkeys_user|cut -d: -f6)"
+fi
+
+if [ -z "$sshkeys_sshdir" ]; then
+	sshkeys_sshdir="${sshkeys_homedir}/.ssh"
+fi
+
+if [ -z "$sshkeys_url" ]; then
+	sshkeys_url="http://${sshkeys_hostaddr}/authorized_keys"
+fi
+
+echo "attempting to fetch authorized_keys from $sshkeys_url"
+while ! fetch -q -o /tmp/authorized_keys "${sshkeys_url}"; do
+	echo "waiting for authorized_keys..."
+	sleep $sshkeys_interval
+done
+echo "fetch successful"
+
+mkdir -p -m 700 "${sshkeys_sshdir}"
+cat /tmp/authorized_keys > "${sshkeys_sshdir}/authorized_keys"
+chmod 600 "${sshkeys_sshdir}/authorized_keys"
+chown -R "${sshkeys_user}:${sshkeys_group}" "${sshkeys_sshdir}"
+
+echo "successfully installed authorized_keys for ${sshkeys_user}"

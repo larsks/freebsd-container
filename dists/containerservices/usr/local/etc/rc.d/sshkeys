@@ -1,0 +1,21 @@
+#!/bin/sh
+
+#
+# REQUIRE: LOGIN FILESYSTEMS NETWORKING
+# PROVIDE: sshkeys
+#
+
+. /etc/rc.subr
+
+name="sshkeys"
+rcvar="${name}_enable"
+start_cmd="${name}_start"
+stop_cmd=":"
+
+load_rc_config $name
+
+sshkeys_start() {
+	daemon -S -T sshkeys /usr/local/sbin/fetch-authorized-keys
+}
+
+run_rc_command "$1"
