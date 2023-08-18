@@ -36,11 +36,17 @@ fi
 
 build_qemu_hostfwd
 
+qemu_args=()
+
+if [[ -c /dev/kvm ]]; then
+	qemu_args+=( -enable-kvm )
+fi
+
 ## Boot the image using QEMU.
-exec qemu-system-x86_64 \
+exec qemu-system-x86_64 -smp "${FREEBSD_CPUS}" -m "${FREEBSD_MEMORY}" \
         -drive if=virtio,format=qcow2,file="${freebsd_image}" \
-        -m "${FREEBSD_MEMORY}" \
         -netdev user,id=net0,net="${FREEBSD_USER_NET}",hostfwd=tcp::22-:22"$hostfwd" \
         -device virtio-net-pci,netdev=net0 \
         -serial mon:stdio \
-        -nographic
+        -nographic \
+	"${qemu_args[@]}"
