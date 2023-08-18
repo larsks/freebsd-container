@@ -20,7 +20,9 @@ freebsd@:~ $
 
 The `freebsd` user has passwordless `sudo` privileges.
 
-## Persistence
+## Storage
+
+### Persistent root filesystem
 
 If you mount a volume on `/disk`, the container will create a copy-on-write disk image in that directory that contains any changes made to the disk image. Additionally, the filesystem will automatically grow to the size of your image, which you can specify by setting the `FREEBSD_COW_SIZE` environment variable (default is 10G). E.g:
 
@@ -32,9 +34,29 @@ Filesystem      Size    Used   Avail Capacity  Mounted on
 /dev/vtbd0p2     19G    1.4G     16G     8%    /
 ```
 
-## Technical notes
+### Additional disk devices
 
-### Forwarding ports
+You can attach additional disk devices to the FreeBSD virtual machine by setting the `FREEBSD_DISKS` environment variable to a space-separated list of `[format:]path:size` tuples. For example, to attach a 10G raw format disk, we might do this:
+
+```
+$ podman run --rm -it -e $PWD/vol:/vol -e FREEBSD_DISKS="raw:/vol/vol0:25G" freebsd
+...
+root@~ # geom disk list
+...
+Geom name: vtbd1
+Providers:
+1. Name: vtbd1
+   Mediasize: 26843545600 (25G)
+   Sectorsize: 512
+   Mode: r0w0e0
+   descr: (null)
+   ident: (null)
+   rotationrate: unknown
+   fwsectors: 63
+   fwheads: 16
+```
+
+## Forwarding ports
 
 By default, container port 22 forwards to port 22 in the FreeBSD virtual machine.  You can set up additional port forward using the `FREEBSD_PORTS` environment variable.  For example, if you want to run a web server under FreeBSD and access it from the container host, you might run:
 
@@ -47,7 +69,7 @@ podman run --rm \
 
 Where `-v $PWD/shared:/shared -p 2200:22` sets up our ssh access, and `-e FREEBSD_PORTS='80:80' -p 8080:80` sets up the QEMU port forward to connect container port 80 to vm port 80, and then exposes container port 80 on host port 8080, allowing us to access the FreeBSD web server from our container host at `http://localhost:8080`.
 
-### QEMU user networking
+## QEMU user networking
 
 QEMU user networking defaults to using the 10.0.2.0/24 network. This is unfortunate because this address range may also be used by your container runtime, which will break networking. There is an obvious solution used by most container runtimes (don't use an address range for which the host has an existing non-default route), but that hasn't been implemented in QEMU. To attempt to prevent this sort of conflict, QEMU in this image is configured to use a portion of the [carrier-grade NAT network range][cgnat]. The carriet grade NAT range is 100.64.0.0/10, but this image uses only 100.64.0.0/24.
 
@@ -68,7 +90,7 @@ vtnet0: flags=8863<UP,BROADCAST,RUNNING,SIMPLEX,MULTICAST> metric 0 mtu 1500
         nd6 options=29<PERFORMNUD,IFDISABLED,AUTO_LINKLOCAL>
 ```
 
-### FreeBSD installer patches
+## FreeBSD installer patches
 
 This repository patches some components of the FreeBSD installer to work around the following bugs:
 

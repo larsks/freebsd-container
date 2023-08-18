@@ -16,6 +16,31 @@ build_qemu_hostfwd() {
     done
 }
 
+build_drives() {
+	# convert FREEBSD_DISKS into an array
+	read -r -a freebsd_disks <<< "$FREEBSD_DISKS"
+
+	for spec in "${freebsd_disks[@]}"; do
+		[[ $spec =~ (([^:]*):)?([^:]*):(.*) ]]
+		format=${BASH_REMATCH[2]:-qcow2}
+		path=${BASH_REMATCH[3]}
+		size=${BASH_REMATCH[4]}
+
+		for var in format path size; do
+			if [[ -z ${!var} ]]; then
+				echo "ERROR: invalid $var value" >&2
+				exit 1
+			fi
+		done
+
+		if ! [[ -f "$path" ]]; then
+			qemu-img create -f "$format" "$path" "$size"
+		fi
+
+		qemu_args+=( -drive "if=virtio,format=$format,file=$path" )
+	done
+}
+
 set -e
 
 ## Extract checksum and build filename
@@ -34,9 +59,10 @@ if [[ -d ${freebsd_cow%/*} ]]; then
 	freebsd_image=${freebsd_cow}
 fi
 
-build_qemu_hostfwd
-
 qemu_args=()
+
+build_qemu_hostfwd
+build_drives
 
 if [[ -c /dev/kvm ]]; then
 	qemu_args+=( -enable-kvm )
