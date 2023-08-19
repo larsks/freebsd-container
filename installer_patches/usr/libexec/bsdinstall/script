@@ -105,13 +105,6 @@ if [ "$BSDINSTALL_LOG" != "${debugFile#+}" ]; then
 fi
 
 # Make partitions
-rm -f $PATH_FSTAB
-touch $PATH_FSTAB
-if [ "$ZFSBOOT_DISKS" ]; then
-	bsdinstall zfsboot
-else
-	bsdinstall scriptedpart "$PARTITIONS"
-fi
 bsdinstall mount
 
 # Fetch missing distribution files, if any

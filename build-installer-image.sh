@@ -34,6 +34,7 @@ done
 
 echo "configuring bootloader"
 cat >> "$workspace"/boot/loader.conf <<EOF
+beastie_disable="YES"
 autoboot_delay="0"
 console="comconsole"
 comconsole_speed="115200"

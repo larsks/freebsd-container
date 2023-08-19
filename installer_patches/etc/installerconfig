@@ -1,4 +1,3 @@
-export PARTITIONS="vtbd0 GPT { auto freebsd-ufs / }"
 export DISTRIBUTIONS="kernel.txz base.txz containerservices.txz"
 export HOSTNAME=freebsd
 export BSDINSTALL_DISTSITE="https://download.freebsd.org/releases/amd64/13.2-RELEASE"
@@ -8,6 +7,17 @@ export nonInteractive="YES"
 
 # Acquire an address using DHCP.
 dhclient $INTERFACES
+
+gpart destroy -F vtbd0 2>/dev/null ||:
+gpart create -s gpt vtbd0
+gpart add -t freebsd-boot -s 512k vtbd0
+gpart add -t freebsd-ufs vtbd0
+gpart bootcode -b /boot/pmbr -p /boot/gptboot -i 1 vtbd0
+newfs vtbd0p2
+
+cat > $PATH_FSTAB <<EOF
+/dev/vtbd0p2 / ufs rw 1 1
+EOF
 
 #!/bin/sh
 
@@ -45,6 +55,7 @@ chmod 440 /usr/local/etc/sudoers.d/freebsd
 
 # Use only the serial console and disable any boot delay
 cat >> /boot/loader.conf <<EOF
+beastie_disable="YES"
 autoboot_delay="0"
 console="comconsole"
 comconsole_speed="115200"
