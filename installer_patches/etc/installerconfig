@@ -1,7 +1,6 @@
-export DISTRIBUTIONS="kernel.txz base.txz containerservices.txz"
-export HOSTNAME=freebsd
-export BSDINSTALL_DISTSITE="https://download.freebsd.org/releases/amd64/13.2-RELEASE"
 export INTERFACES=vtnet0
+export DISTRIBUTIONS="kernel.txz base.txz containerservices.txz"
+export BSDINSTALL_DISTSITE="https://download.freebsd.org/releases/amd64/13.2-RELEASE"
 
 export nonInteractive="YES"
 
@@ -21,12 +20,15 @@ EOF
 
 #!/bin/sh
 
+set -e
+
 export LC_ALL=C
 
 sysrc ifconfig_DEFAULT=DHCP
 sysrc sshd_enable=YES
 sysrc sshkeys_enable=YES
 sysrc growfs_enable=YES
+sysrc -f /etc/rc.conf.d/hostname hostname=freebsd
 
 # No. Sendmail.
 for smcfg in enable submit_enable outbound_enable msp_queue_enable; do
