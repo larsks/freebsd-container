@@ -71,7 +71,7 @@ fi
 ## Boot the image using QEMU.
 exec qemu-system-x86_64 -smp "${FREEBSD_CPUS}" -m "${FREEBSD_MEMORY}" \
         -drive if=virtio,format=qcow2,file="${freebsd_image}" \
-        -netdev user,id=net0,net="${FREEBSD_USER_NET}",hostfwd=tcp::22-:22"$hostfwd" \
+        -netdev user,id=net0,net="${FREEBSD_USER_NET}",hostfwd=tcp::22-:22,hostfwd=tcp::7267-:7267"$hostfwd" \
         -device virtio-net-pci,netdev=net0 \
         -serial mon:stdio \
         -nographic \

@@ -28,6 +28,7 @@ sysrc ifconfig_DEFAULT=DHCP
 sysrc sshd_enable=YES
 sysrc sshkeys_enable=YES
 sysrc growfs_enable=YES
+sysrc healthcheck_enable=YES
 sysrc -f /etc/rc.conf.d/hostname hostname=freebsd
 
 # No. Sendmail.
@@ -37,7 +38,8 @@ done
 
 pkg install -y \
 	sudo \
-	rsync
+	rsync \
+	darkhttpd
 
 # Add freebsd user if it doesn't exist
 if ! getent passwd freebsd; then

@@ -1,0 +1,32 @@
+#!/bin/sh
+
+#
+# REQUIRE: LOGIN FILESYSTEMS
+# PROVIDE: healthcheck
+#
+
+. /etc/rc.subr
+
+name="healthcheck"
+rcvar="${name}_enable"
+start_cmd="${name}_start"
+command=/usr/local/bin/darkhttpd
+pidfile=/var/run/healthcheck.pid
+
+load_rc_config $name
+
+: "${healthcheck_port:=7267}"
+
+healthcheck_start() {
+	mkdir -p /var/lib/healthcheck
+	echo OK > /var/lib/healthcheck/healthz
+	exec /usr/local/bin/darkhttpd /var/lib/healthcheck \
+		--port "${healthcheck_port}" \
+		--default-mimetype text/plain \
+		--daemon \
+		--syslog \
+		--no-listing \
+		--pidfile /var/run/healthcheck.pid
+}
+
+run_rc_command "$1"

@@ -72,7 +72,8 @@ RUN apk add \
 	qemu-img \
 	qemu-system-x86_64 \
 	openssh \
-	darkhttpd
+	darkhttpd \
+	curl
 
 WORKDIR /freebsd
 COPY --from=build_image /freebsd/freebsd-*.img ./
