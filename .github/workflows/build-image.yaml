@@ -60,6 +60,24 @@ jobs:
             type=ref,event=pr
             type=sha
 
+      - name: Generate unique image name
+        id: unique-name
+        run: |
+          echo "UNIQUE_NAME=freebsd-${{ github.run_id }}-${{ github.run_attempt }}" > $GITHUB_OUTPUT
+
+      # Build Docker image with Buildx
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: Containerfile
+          push: false
+          tags: ${{ steps.unique-name.outputs.UNIQUE_NAME }}
+
+      - name: Test image
+        run: |
+          timeout 300 bash ci/test-image.sh "${{ steps.unique-name.outputs.UNIQUE_NAME }}"
+
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
