@@ -7,8 +7,8 @@
 set -e
 
 : "${installer_iso:=installer.iso}"
+: "${freebsd_image:="$(mktemp -u freebsdXXXXXX)"}"
 
-freebsd_image="$(mktemp -u freebsdXXXXXX)"
 qemu-img create -f qcow2 "${freebsd_image}" "${FREEBSD_IMAGE_SIZE}"
 
 qemu_args=()
